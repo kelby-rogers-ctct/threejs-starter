@@ -17,16 +17,6 @@ function main() {
 
   const scene = new THREE.Scene();
 
-  const boxWidth = 1;
-  const boxHeight = 1;
-  const boxDepth = 1;
-  const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
-
-  const material = new THREE.MeshPhongMaterial({ color: 0x44aa88 }); // greenish blue
-
-  const cube = new THREE.Mesh(geometry, material);
-  scene.add(cube);
-
   const dirLight = new THREE.DirectionalLight(0xffffff, 1);
   dirLight.position.set(-3, 3, 10);
   dirLight.layers.enableAll();
@@ -34,6 +24,8 @@ function main() {
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
+
+  addBox();
 
   const axesHelper = new THREE.AxesHelper(1.3, 1.3, 1.3);
   scene.add(axesHelper);
@@ -43,6 +35,18 @@ function main() {
   controls.maxDistance = 20;
 
   window.addEventListener("resize", onWindowResize);
+
+  function addBox() {
+    const boxWidth = 1;
+    const boxHeight = 1;
+    const boxDepth = 1;
+    const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+
+    const material = new THREE.MeshPhongMaterial({ color: 0x44aa88 }); // greenish blue
+
+    const cube = new THREE.Mesh(geometry, material);
+    scene.add(cube);
+  }
 
   function onWindowResize() {
     const width = window.innerWidth;
