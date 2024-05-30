@@ -11,7 +11,7 @@ function main() {
   const fov = 75;
   const near = 0.1;
   const far = 5;
-  let cube;
+  let sphere;
   const width = window.innerWidth;
   const height = window.innerHeight;
   const aspect = width / height;
@@ -29,20 +29,17 @@ function main() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
-  function addBox() {
-    const boxWidth = 1;
-    const boxHeight = 1;
-    const boxDepth = 1;
-    const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+  function addSphere() {
+    const geometry = new THREE.SphereGeometry(0.5);
 
     const material = new THREE.MeshPhongMaterial({ color: 0x44aa88 }); // greenish blue
 
-    cube = new THREE.Mesh(geometry, material);
-    cube.position.setX(0.51);
-    scene.add(cube);
+    sphere = new THREE.Mesh(geometry, material);
+    // sphere.position.setX(0);
+    scene.add(sphere);
   }
 
-  addBox();
+  addSphere();
 
   const axesHelper = new THREE.AxesHelper(1.3, 1.3, 1.3);
   scene.add(axesHelper);
@@ -75,24 +72,24 @@ function main() {
   function getShortestZDistance() {
     const raycaster = new THREE.Raycaster();
     const direction = new THREE.Vector3();
-    const point = new THREE.Vector3(0, 0, 5);
-    direction.set(0, 0, 1);
+    const xDistance = 100;
+    const yDistance = 0.4;
+    const point = new THREE.Vector3(xDistance, yDistance, 0);
+    direction.set(1, 0, 0);
 
     // Perform raycasting in the positive direction
     raycaster.set(point, direction);
-    let intersects = raycaster.intersectObject(cube);
+    let intersects = raycaster.intersectObject(sphere);
 
     // Perform raycasting in the negative direction
     direction.negate();
     raycaster.set(point, direction);
-    intersects = intersects.concat(raycaster.intersectObject(cube));
+    intersects = intersects.concat(raycaster.intersectObject(sphere));
 
     // Calculate the shortest distance
     let shortestDistance = Infinity;
     intersects.forEach((intersect) => {
       const distance = point.distanceTo(intersect.point);
-      // if (intersects.length > 0) {
-      // }
       if (distance < shortestDistance) {
         shortestDistance = distance;
       }
@@ -102,8 +99,9 @@ function main() {
       new THREE.ArrowHelper(
         raycaster.ray.direction,
         raycaster.ray.origin,
-        5,
-        0xff0000
+        xDistance * 0.99,
+        0xff0000,
+        1
       )
     );
 
