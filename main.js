@@ -3,8 +3,10 @@
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 
-function main() {
+async function main() {
+  THREE.Object3D.DEFAULT_UP = new THREE.Vector3(0, 0, 1);
   const canvas = document.querySelector("#c");
   const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
@@ -17,7 +19,7 @@ function main() {
   const aspect = width / height;
 
   const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-  camera.position.z = 2;
+  camera.position.set(3, 0, 2);
 
   const scene = new THREE.Scene();
 
@@ -29,17 +31,25 @@ function main() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
-  function addSphere() {
-    const geometry = new THREE.SphereGeometry(0.5);
+  const objLoader = new OBJLoader();
 
-    const material = new THREE.MeshPhongMaterial({ color: 0x44aa88 }); // greenish blue
-
-    sphere = new THREE.Mesh(geometry, material);
-    // sphere.position.setX(0);
-    scene.add(sphere);
+  function loadOBJ(path) {
+    return new Promise(function (resolve, reject) {
+      objLoader.load(
+        path,
+        function (obj) {
+          resolve(obj);
+        },
+        undefined,
+        function (error) {
+          reject(error);
+        }
+      );
+    });
   }
 
-  addSphere();
+  const body = await loadOBJ("./body.obj");
+  scene.add(body);
 
   const axesHelper = new THREE.AxesHelper(1.3, 1.3, 1.3);
   scene.add(axesHelper);
@@ -72,19 +82,19 @@ function main() {
   function getShortestZDistance() {
     const raycaster = new THREE.Raycaster();
     const direction = new THREE.Vector3();
-    const xDistance = 100;
-    const yDistance = 0.4;
-    const point = new THREE.Vector3(xDistance, yDistance, 0);
-    direction.set(1, 0, 0);
+    const xDistance = -0.2;
+    const yDistance = 0.2;
+    const point = new THREE.Vector3(xDistance, yDistance, 1);
+    direction.set(0, 0, 1);
 
     // Perform raycasting in the positive direction
     raycaster.set(point, direction);
-    let intersects = raycaster.intersectObject(sphere);
+    let intersects = raycaster.intersectObject(body);
 
     // Perform raycasting in the negative direction
     direction.negate();
     raycaster.set(point, direction);
-    intersects = intersects.concat(raycaster.intersectObject(sphere));
+    intersects = intersects.concat(raycaster.intersectObject(body));
 
     // Calculate the shortest distance
     let shortestDistance = Infinity;
@@ -99,9 +109,8 @@ function main() {
       new THREE.ArrowHelper(
         raycaster.ray.direction,
         raycaster.ray.origin,
-        xDistance * 0.99,
-        0xff0000,
-        1
+        undefined,
+        0xff0000
       )
     );
 
