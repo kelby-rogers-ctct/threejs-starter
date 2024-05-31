@@ -56,7 +56,7 @@ async function main() {
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.minDistance = 1;
-  controls.maxDistance = 200;
+  controls.maxDistance = 2000;
 
   function onWindowResize() {
     const width = window.innerWidth;
@@ -79,44 +79,68 @@ async function main() {
   }
 
   draw();
-  function getShortestZDistance() {
+  function getIntersectPoint(point, direction) {
     const raycaster = new THREE.Raycaster();
-    const direction = new THREE.Vector3();
-    const xDistance = -0.2;
-    const yDistance = 0.2;
-    const point = new THREE.Vector3(xDistance, yDistance, 1);
-    direction.set(0, 0, 1);
+    let pointOutsideMesh = new THREE.Vector3();
+    pointOutsideMesh.copy(direction);
+    pointOutsideMesh.multiply(new THREE.Vector3(5, 5, 5));
+    pointOutsideMesh.add(point);
 
     // Perform raycasting in the positive direction
-    raycaster.set(point, direction);
+    raycaster.set(pointOutsideMesh, direction);
     let intersects = raycaster.intersectObject(body);
 
     // Perform raycasting in the negative direction
     direction.negate();
-    raycaster.set(point, direction);
+    raycaster.set(pointOutsideMesh, direction);
     intersects = intersects.concat(raycaster.intersectObject(body));
 
     // Calculate the shortest distance
     let shortestDistance = Infinity;
+    let closestPoint = new THREE.Vector3();
     intersects.forEach((intersect) => {
       const distance = point.distanceTo(intersect.point);
       if (distance < shortestDistance) {
         shortestDistance = distance;
+        closestPoint = intersect.point;
       }
     });
 
-    scene.add(
-      new THREE.ArrowHelper(
-        raycaster.ray.direction,
-        raycaster.ray.origin,
-        undefined,
-        0xff0000
-      )
-    );
-
-    console.log("Shortest Distance:", shortestDistance);
+    return closestPoint;
   }
 
-  getShortestZDistance();
+  function createCylinderFromVectors(start, end) {
+    // Calculate the length of the cylinder
+
+    const start = getIntersectPoint(
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 0, -1)
+    );
+    const end = getIntersectPoint(
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 0, 1)
+    );
+
+    const direction = new THREE.Vector3().subVectors(end, start);
+    const length = direction.length() * 1.1;
+
+    const midpoint = new THREE.Vector3()
+      .addVectors(start, end)
+      .multiplyScalar(0.5);
+
+    const geometry = new THREE.CylinderGeometry(0.05, 0.05, length);
+    const material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    const cylinder = new THREE.Mesh(geometry, material);
+
+    cylinder.position.copy(midpoint);
+
+    cylinder.quaternion.setFromUnitVectors(
+      new THREE.Vector3(0, 1, 0),
+      direction.normalize()
+    );
+
+    scene.add(cylinder);
+  }
+  createCylinderFromVectors();
 }
 main();
