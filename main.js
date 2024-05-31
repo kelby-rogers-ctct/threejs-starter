@@ -10,10 +10,10 @@ async function main() {
   const canvas = document.querySelector("#c");
   const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
+  const debug = true;
   const fov = 75;
   const near = 0.1;
   const far = 5;
-  let sphere;
   const width = window.innerWidth;
   const height = window.innerHeight;
   const aspect = width / height;
@@ -106,21 +106,21 @@ async function main() {
       }
     });
 
+    if (debug) {
+      scene.add(
+        new THREE.ArrowHelper(
+          raycaster.ray.direction,
+          raycaster.ray.origin,
+          1000,
+          0xff0000
+        )
+      );
+    }
+
     return closestPoint;
   }
 
   function createCylinderFromVectors(start, end) {
-    // Calculate the length of the cylinder
-
-    const start = getIntersectPoint(
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 0, -1)
-    );
-    const end = getIntersectPoint(
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 0, 1)
-    );
-
     const direction = new THREE.Vector3().subVectors(end, start);
     const length = direction.length() * 1.1;
 
@@ -141,6 +141,27 @@ async function main() {
 
     scene.add(cylinder);
   }
-  createCylinderFromVectors();
+
+  const distanceArbitrarilyFarFromMachine = 100;
+
+  const corStart = getIntersectPoint(
+    new THREE.Vector3(0, 0, -distanceArbitrarilyFarFromMachine),
+    new THREE.Vector3(0, 0, -1)
+  );
+  const corEnd = getIntersectPoint(
+    new THREE.Vector3(0, 0, distanceArbitrarilyFarFromMachine),
+    new THREE.Vector3(0, 0, 1)
+  );
+  createCylinderFromVectors(corStart, corEnd);
+
+  const pinAStart = getIntersectPoint(
+    new THREE.Vector3(distanceArbitrarilyFarFromMachine, 0, 0.545),
+    new THREE.Vector3(1, 0, 0)
+  );
+  const pinAEnd = getIntersectPoint(
+    new THREE.Vector3(-distanceArbitrarilyFarFromMachine, 0, 0.545),
+    new THREE.Vector3(-1, 0, 0)
+  );
+  createCylinderFromVectors(pinAStart, pinAEnd);
 }
 main();
