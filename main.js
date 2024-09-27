@@ -7,7 +7,9 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 async function main() {
   const canvas = document.querySelector("#c");
   const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
-
+  let totalDistance = 0;
+  const maxDistance = 60;
+  let reverse = false;
   const fov = 75;
   const aspect = 2; // the canvas default
   const near = 0.1;
@@ -16,14 +18,7 @@ async function main() {
   camera.position.set(90, 75, -160);
 
   const scene = new THREE.Scene();
-
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-  dirLight.position.set(120, 30, 100);
-  dirLight.layers.enableAll();
-  scene.add(dirLight);
-
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-  scene.add(ambientLight);
+  scene.background = new THREE.Color(0x777777);
 
   const kettlewell = await loadGLTF("./kettlewell.glb");
   kettlewell.scene.position.set(0, 0, 0);
@@ -45,15 +40,33 @@ async function main() {
       }
     }
   });
-  hex.scene.rotateY(Math.PI / 2.7);
+  hex.scene.rotateY(Math.PI / 2.85);
   scene.add(hex.scene);
 
-  const axesHelper = new THREE.AxesHelper(1.3, 1.3, 1.3);
-  scene.add(axesHelper);
+  camera.lookAt(hex.scene);
+  const lightsToRemove = [];
+  scene.traverse((object) => {
+    if (object.isLight) {
+      lightsToRemove.push(object);
+    }
+  });
+
+  lightsToRemove.forEach((light) => {
+    light.parent.remove(light);
+  });
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+  dirLight.position.set(120, 30, 100);
+  dirLight.layers.enableAll();
+  scene.add(dirLight);
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(ambientLight);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.minDistance = 1;
   controls.maxDistance = 2000;
+  controls.target = new THREE.Vector3(90, 30, -100);
 
   window.addEventListener("resize", onWindowResize);
 
@@ -75,12 +88,6 @@ async function main() {
         }
       }
     });
-    // Remove lights from their parents after traversal
-    lights.forEach((light) => {
-      if (light.parent) {
-        // light.parent.remove(light);
-      }
-    });
     return gltf;
   }
 
@@ -98,13 +105,17 @@ async function main() {
     requestAnimationFrame(draw);
     const width = window.innerWidth;
     const height = window.innerHeight;
-    // hex.scene.position.x -= 0.1;
-    moveForward(hex.scene, -0.1);
+    moveForward(hex.scene, -0.25);
     renderer.setSize(width, height);
     renderer.render(scene, camera);
   }
 
   function moveForward(object, distance) {
+    totalDistance += distance;
+    if (maxDistance === Math.abs(totalDistance)) {
+      object.rotateY(Math.PI);
+      totalDistance = 0;
+    }
     // Get the current direction the object is facing
     const direction = new THREE.Vector3();
     object.getWorldDirection(direction);
