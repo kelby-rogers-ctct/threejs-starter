@@ -3,49 +3,57 @@
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-
-function main() {
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+async function main() {
   const canvas = document.querySelector("#c");
   const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
   const fov = 75;
   const aspect = 2; // the canvas default
   const near = 0.1;
-  const far = 5;
+  const far = 5000;
   const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-  camera.position.z = 2;
+  camera.position.set(90, 75, -160);
 
   const scene = new THREE.Scene();
 
   const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-  dirLight.position.set(-3, 3, 10);
+  dirLight.position.set(120, 30, 100);
   dirLight.layers.enableAll();
   scene.add(dirLight);
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
-  addBox();
+  const gltf = await loadGLTF();
+  gltf.scene.position.set(0, 0, 0);
+  scene.add(gltf.scene);
 
   const axesHelper = new THREE.AxesHelper(1.3, 1.3, 1.3);
   scene.add(axesHelper);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.minDistance = 1;
-  controls.maxDistance = 20;
+  controls.maxDistance = 2000;
 
   window.addEventListener("resize", onWindowResize);
 
-  function addBox() {
-    const boxWidth = 1;
-    const boxHeight = 1;
-    const boxDepth = 1;
-    const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
-
-    const material = new THREE.MeshPhongMaterial({ color: 0x44aa88 }); // greenish blue
-
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
+  async function loadGLTF() {
+    const loader = new GLTFLoader();
+    const gltf = await loader.loadAsync("./kettlewell.glb");
+    gltf.scene.traverse((node) => {
+      if (node.isMesh && node.material) {
+        // Check for both normal material and array of materials
+        if (Array.isArray(node.material)) {
+          node.material.forEach((material) => {
+            material.side = THREE.DoubleSide;
+          });
+        } else {
+          node.material.side = THREE.DoubleSide;
+        }
+      }
+    });
+    return gltf;
   }
 
   function onWindowResize() {
