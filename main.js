@@ -4,8 +4,11 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import Stats from "three/addons/libs/stats.module.js";
+
 async function main() {
   const canvas = document.querySelector("#c");
+  const container = document.querySelector("#container");
   const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
   let totalDistance = 0;
   const maxDistance = 60;
@@ -14,6 +17,7 @@ async function main() {
   const aspect = 2; // the canvas default
   const near = 0.1;
   const far = 5000;
+  let stats;
   const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
   camera.position.set(90, 75, -160);
 
@@ -24,7 +28,7 @@ async function main() {
   kettlewell.scene.position.set(0, 0, 0);
   scene.add(kettlewell.scene);
 
-  const hex = await loadGLTF("./hex.gltf");
+  const hex = await loadGLTF("./hex.glb");
   hex.scene.position.set(90, 30, -100);
   const scaleFactor = 6;
   hex.scene.scale.set(scaleFactor, scaleFactor, scaleFactor);
@@ -68,6 +72,9 @@ async function main() {
   controls.maxDistance = 2000;
   controls.target = new THREE.Vector3(90, 30, -100);
 
+  stats = new Stats();
+  container.appendChild(stats.dom);
+
   window.addEventListener("resize", onWindowResize);
 
   async function loadGLTF(path) {
@@ -99,15 +106,16 @@ async function main() {
     renderer.setSize(width, height);
   }
 
+  const width = window.innerWidth;
+  const height = window.innerHeight;
   draw();
 
   function draw() {
     requestAnimationFrame(draw);
-    const width = window.innerWidth;
-    const height = window.innerHeight;
     moveForward(hex.scene, -0.25);
     renderer.setSize(width, height);
     renderer.render(scene, camera);
+    stats.update();
   }
 
   function moveForward(object, distance) {
@@ -118,7 +126,7 @@ async function main() {
     }
     // Get the current direction the object is facing
     const direction = new THREE.Vector3();
-    object.getWorldDirection(direction);
+    hex.scene.getWorldDirection(direction);
 
     // Move the object along its forward direction
     object.position.add(direction.multiplyScalar(distance));
