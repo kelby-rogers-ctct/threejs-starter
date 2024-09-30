@@ -22,9 +22,22 @@ async function main() {
   camera.position.set(90, 75, -160);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x777777);
+  scene.background = new THREE.Color(0xe1e1e1);
 
   const kettlewell = await loadGLTF("./kettlewell.glb");
+  kettlewell.scene.traverse((node) => {
+    if (node.isMesh && node.material) {
+      // Check for both normal material and array of materials
+      if (Array.isArray(node.material)) {
+        node.material.forEach((material) => {
+          material.color.set(0xb3b3a5);
+        });
+      } else {
+        node.material.color.set(0xb3b3a5);
+      }
+    }
+  });
+
   kettlewell.scene.position.set(0, 0, 0);
   scene.add(kettlewell.scene);
 
@@ -48,18 +61,8 @@ async function main() {
   scene.add(hex.scene);
 
   camera.lookAt(hex.scene);
-  const lightsToRemove = [];
-  scene.traverse((object) => {
-    if (object.isLight) {
-      lightsToRemove.push(object);
-    }
-  });
 
-  lightsToRemove.forEach((light) => {
-    light.parent.remove(light);
-  });
-
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 20);
   dirLight.position.set(120, 30, 100);
   dirLight.layers.enableAll();
   scene.add(dirLight);
@@ -79,12 +82,9 @@ async function main() {
 
   async function loadGLTF(path) {
     const loader = new GLTFLoader();
-    const lights = [];
     const gltf = await loader.loadAsync(path);
     gltf.scene.traverse((node) => {
-      if (node.isLight) {
-        lights.push(node);
-      } else if (node.isMesh && node.material) {
+      if (node.isMesh && node.material) {
         // Check for both normal material and array of materials
         if (Array.isArray(node.material)) {
           node.material.forEach((material) => {
