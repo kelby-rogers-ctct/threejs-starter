@@ -45,18 +45,7 @@ async function main() {
   hex.scene.position.set(90, 30, -100);
   const scaleFactor = 6;
   hex.scene.scale.set(scaleFactor, scaleFactor, scaleFactor);
-  hex.scene.traverse((node) => {
-    if (node.isMesh && node.material) {
-      // Check for both normal material and array of materials
-      if (Array.isArray(node.material)) {
-        node.material.forEach((material) => {
-          material.color.set(0xffff00);
-        });
-      } else {
-        node.material.color.set(0xffff00);
-      }
-    }
-  });
+
   hex.scene.rotateY(Math.PI / 2.85);
   scene.add(hex.scene);
 
