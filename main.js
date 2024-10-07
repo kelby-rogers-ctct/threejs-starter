@@ -6,6 +6,30 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import Stats from "three/addons/libs/stats.module.js";
 
+const views = [
+  {
+    left: 0,
+    bottom: 0,
+    width: 0.5,
+    height: 1.0,
+    background: new THREE.Color(0xe1e1ef),
+  },
+  {
+    left: 0.5,
+    bottom: 0,
+    width: 0.5,
+    height: 0.5,
+    background: new THREE.Color(0xe1efe1),
+  },
+  {
+    left: 0.5,
+    bottom: 0.5,
+    width: 0.5,
+    height: 0.5,
+    background: new THREE.Color(0xefe1e1),
+  },
+];
+
 async function main() {
   const canvas = document.querySelector("#c");
   const container = document.querySelector("#container");
@@ -18,11 +42,13 @@ async function main() {
   const near = 0.1;
   const far = 5000;
   let stats;
+  let windowWidth = window.innerWidth;
+  let windowHeight = window.innerHeight;
+
   const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
   camera.position.set(90, 75, -160);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xe1e1e1);
 
   const kettlewell = await loadGLTF("./kettlewell.glb");
   kettlewell.scene.traverse((node) => {
@@ -67,8 +93,6 @@ async function main() {
   stats = new Stats();
   container.appendChild(stats.dom);
 
-  window.addEventListener("resize", onWindowResize);
-
   async function loadGLTF(path) {
     const loader = new GLTFLoader();
     const gltf = await loader.loadAsync(path);
@@ -87,26 +111,48 @@ async function main() {
     return gltf;
   }
 
-  function onWindowResize() {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-    renderer.setSize(width, height);
+  function updateSize() {
+    if (
+      windowWidth != window.innerWidth ||
+      windowHeight != window.innerHeight
+    ) {
+      windowWidth = window.innerWidth;
+      windowHeight = window.innerHeight;
+
+      renderer.setSize(windowWidth, windowHeight);
+    }
   }
 
-  const width = window.innerWidth;
-  const height = window.innerHeight;
   draw();
 
   function draw() {
     requestAnimationFrame(draw);
     moveForward(hex.scene, -0.25);
-    renderer.setSize(width, height);
-    renderer.render(scene, camera);
+    renderer.setSize(windowWidth, windowHeight);
+    render();
     stats.update();
   }
 
+  function render() {
+    updateSize();
+    for (let ii = 0; ii < views.length; ++ii) {
+      const view = views[ii];
+
+      const left = Math.floor(windowWidth * view.left);
+      const bottom = Math.floor(windowHeight * view.bottom);
+      const width = Math.floor(windowWidth * view.width);
+      const height = Math.floor(windowHeight * view.height);
+
+      renderer.setViewport(left, bottom, width, height);
+      renderer.setScissor(left, bottom, width, height);
+      renderer.setScissorTest(true);
+      renderer.setClearColor(view.background);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.render(scene, camera);
+    }
+  }
   function moveForward(object, distance) {
     totalDistance += distance;
     if (maxDistance === Math.abs(totalDistance)) {
