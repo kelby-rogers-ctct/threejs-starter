@@ -122,8 +122,10 @@ async function main() {
       renderer.setSize(windowWidth, windowHeight);
     }
   }
-
+  updateSize();
   draw();
+
+  window.addEventListener("resize", updateSize);
 
   function draw() {
     requestAnimationFrame(draw);
@@ -134,7 +136,7 @@ async function main() {
   }
 
   function render() {
-    updateSize();
+    // updateSize();
     for (let ii = 0; ii < views.length; ++ii) {
       const view = views[ii];
 
