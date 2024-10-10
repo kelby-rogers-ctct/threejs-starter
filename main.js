@@ -49,18 +49,17 @@ async function main() {
   camera.position.set(90, 75, -160);
 
   const scene = new THREE.Scene();
+  const textureLoader = new THREE.TextureLoader();
+  const texture = await textureLoader.loadAsync("./dirt.png");
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(4, 4);
 
   const kettlewell = await loadGLTF("./kettlewell.glb");
   kettlewell.scene.traverse((node) => {
     if (node.isMesh && node.material) {
-      // Check for both normal material and array of materials
-      if (Array.isArray(node.material)) {
-        node.material.forEach((material) => {
-          material.color.set(0xb3b3a5);
-        });
-      } else {
-        node.material.color.set(0xb3b3a5);
-      }
+      node.material.map = texture;
+      node.material.side = THREE.BackSide;
     }
   });
 
@@ -96,18 +95,7 @@ async function main() {
   async function loadGLTF(path) {
     const loader = new GLTFLoader();
     const gltf = await loader.loadAsync(path);
-    gltf.scene.traverse((node) => {
-      if (node.isMesh && node.material) {
-        // Check for both normal material and array of materials
-        if (Array.isArray(node.material)) {
-          node.material.forEach((material) => {
-            material.side = THREE.DoubleSide;
-          });
-        } else {
-          node.material.side = THREE.DoubleSide;
-        }
-      }
-    });
+
     return gltf;
   }
 
