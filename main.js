@@ -5,7 +5,11 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import Stats from "three/addons/libs/stats.module.js";
+import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 
+let gui;
+let params = { boardSize: 2048 / 1 };
+let textureCanvas, offscreenCanvas;
 const views = [
   {
     left: 0,
@@ -49,11 +53,15 @@ async function main() {
   camera.position.set(90, 75, -160);
 
   const scene = new THREE.Scene();
-  const textureLoader = new THREE.TextureLoader();
-  const texture = await textureLoader.loadAsync("./dirt.png");
+  textureCanvas = document.createElement("canvas");
+  textureCanvas.height = 2048;
+  textureCanvas.width = 2048;
+
+  const texture = new THREE.CanvasTexture(textureCanvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(4, 4);
+  offscreenCanvas = textureCanvas.transferControlToOffscreen();
 
   const kettlewell = await loadGLTF("./kettlewell.glb");
   kettlewell.scene.traverse((node) => {
@@ -121,6 +129,8 @@ async function main() {
     renderer.setSize(windowWidth, windowHeight);
     render();
     stats.update();
+
+    // initGui();
   }
 
   function render() {
@@ -156,6 +166,29 @@ async function main() {
     // Move the object along its forward direction
     object.position.add(direction.multiplyScalar(distance));
   }
+
+  const myWorker = new Worker(new URL("worker.js", import.meta.url));
+  myWorker.postMessage({ canvas: offscreenCanvas }, [offscreenCanvas]);
+
+  myWorker.onmessage = (e) => {
+    texture.needsUpdate = true;
+    console.log(
+      "Message received from worker",
+      e.data,
+      new Date().toLocaleTimeString()
+    );
+    setTimeout(() => {
+      myWorker.postMessage({ draw: true, boardSize: params.boardSize });
+    }, 100);
+  };
+}
+
+function initGui() {
+  gui = new GUI();
+
+  gui.add(params, "boardSize", 2, 2048, 64);
+
+  gui.open();
 }
 
 main();
