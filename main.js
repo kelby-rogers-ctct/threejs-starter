@@ -8,7 +8,7 @@ import Stats from "three/addons/libs/stats.module.js";
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 
 let gui;
-let params = { boardSize: 2048 / 1 };
+let params = { boardSize: 2048 / 100 };
 let textureCanvas, offscreenCanvas;
 const views = [
   {
