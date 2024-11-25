@@ -7,6 +7,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 
+let textureReady;
 let gui;
 let params = { boardSize: 2048 / 100 };
 let textureCanvas, offscreenCanvas;
@@ -128,13 +129,16 @@ async function main() {
     moveForward(hex.scene, -0.25);
     renderer.setSize(windowWidth, windowHeight);
     render();
+    if (textureReady) {
+      textureReady = false;
+      myWorker.postMessage({ draw: true, boardSize: params.boardSize });
+    }
     stats.update();
 
     // initGui();
   }
 
   function render() {
-    // updateSize();
     for (let ii = 0; ii < views.length; ++ii) {
       const view = views[ii];
 
@@ -171,15 +175,13 @@ async function main() {
   myWorker.postMessage({ canvas: offscreenCanvas }, [offscreenCanvas]);
 
   myWorker.onmessage = (e) => {
+    textureReady = true;
     texture.needsUpdate = true;
     console.log(
       "Message received from worker",
       e.data,
       new Date().toLocaleTimeString()
     );
-    setTimeout(() => {
-      myWorker.postMessage({ draw: true, boardSize: params.boardSize });
-    }, 100);
   };
 }
 
